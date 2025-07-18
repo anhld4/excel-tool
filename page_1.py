@@ -71,41 +71,44 @@ if uploaded_file_data:
                     return any(code in target_codes for code in items)
 
                 df_final = df_filtered_date[df_filtered_date['Mã thẻ GG'].apply(contains_code)]
-                tong_doanh_thu = df_final['Doanh thu tính lương'].sum()
 
                 # ✅ Kết quả
                 st.subheader("📌 Dữ liệu sau khi lọc")
                 st.dataframe(df_final, use_container_width=True)
 
-                # Metric
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("🧮 SỐ HÓA ĐƠN DÙNG CODE", len(df_final))
-                with col2:
-                    st.metric("💰 DOANH THU CODE", f"{tong_doanh_thu:,.0f} VND")
+                if not df_final.empty:
 
-                # Tổng hợp theo khu vực
-                df_merged = df_final.copy()
-                df_merged["Chi nhánh_lower"] = df_merged["Chi nhánh"].str.lower()
-                kv_df["CH_lower"] = kv_df["Chuyển data cho CH"].str.lower()
+                    tong_doanh_thu = df_final['Doanh thu tính lương'].sum()
 
-                df_merged = df_merged.merge(
-                    kv_df,
-                    left_on="Chi nhánh_lower",
-                    right_on="CH_lower",
-                    how="left"
-                )
+                    # Metric
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("🧮 SỐ HÓA ĐƠN DÙNG CODE", len(df_final))
+                    with col2:
+                        st.metric("💰 DOANH THU CODE", f"{tong_doanh_thu:,.0f} VND")
 
-                st.subheader("📍 Dữ liệu sau khi gán KV")
+                    # Tổng hợp theo khu vực
+                    df_merged = df_final.copy()
+                    df_merged["Chi nhánh_lower"] = df_merged["Chi nhánh"].str.lower()
+                    kv_df["CH_lower"] = kv_df["Chuyển data cho CH"].str.lower()
 
-                st.dataframe(df_merged, use_container_width=True)
+                    df_merged = df_merged.merge(
+                        kv_df,
+                        left_on="Chi nhánh_lower",
+                        right_on="CH_lower",
+                        how="left"
+                    )
 
-                summary_df = df_merged.groupby("KV sau chuyển data").agg(
-                    So_hoa_don=("Doanh thu tính lương", "count"),
-                    Doanh_thu=("Doanh thu tính lương", "sum")
-                ).reset_index().rename(columns={"KV sau chuyển data": "Khu vực"})
-                st.subheader("📊 Thống kê theo Khu vực")
-                st.dataframe(summary_df, use_container_width=True)
+                    st.subheader("📍 Dữ liệu sau khi gán KV")
+
+                    st.dataframe(df_merged, use_container_width=True)
+
+                    summary_df = df_merged.groupby("KV sau chuyển data").agg(
+                        So_hoa_don=("Doanh thu tính lương", "count"),
+                        Doanh_thu=("Doanh thu tính lương", "sum")
+                    ).reset_index().rename(columns={"KV sau chuyển data": "Khu vực"})
+                    st.subheader("📊 Thống kê theo Khu vực")
+                    st.dataframe(summary_df, use_container_width=True)
 
 
 

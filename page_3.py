@@ -66,92 +66,94 @@ if uploaded_file:
 
                 df_final = df_filtered_date[df_filtered_date['Mã thẻ GG'].apply(contains_code)]
 
-                # ❌ Loại bỏ dòng có Mã thẻ GG trống hoặc rỗng
-                df_final = df_final[df_final['Mã thẻ GG'].notna()]
-                df_final = df_final[df_final['Mã thẻ GG'].str.strip() != '']
-
-                # 👉 Gộp Mã thẻ GG theo SĐT
-                def merge_and_dedup(values):
-                    codes = []
-                    for val in values.dropna():
-                        codes.extend([code.strip() for code in val.split(",")])
-                    return ', '.join(sorted(set(codes)))
-
-
-                df_merged = (
-                    df_final
-                    .groupby('SĐT')['Mã thẻ GG']
-                    .apply(merge_and_dedup)
-                    .reset_index()
-                )
-
-                def count_matching_codes(ma_gg):
-                    if pd.isna(ma_gg):
-                        return 0
-                    codes = {x.strip().split("-")[0] for x in str(ma_gg).split(",")}
-                    return len(codes.intersection(target_codes))
-
-                df_merged['matching_count'] = df_merged['Mã thẻ GG'].apply(count_matching_codes)
-
-                max_match = len(target_codes)
-                matching_stats = OrderedDict()
-
-                for k in range(1, max_match):
-                    matching_stats[f"Dùng đúng {k} mã"] = (df_merged['matching_count'] == k).sum()
-
-                # Record dùng tất cả mã
-                matching_stats[f"Dùng tất cả {max_match} mã"] = (df_merged['matching_count'] == max_match).sum()
-
                 st.subheader("📋 Dữ liệu sau khi lọc")
                 st.dataframe(df_final, use_container_width=True)
 
-                st.subheader("📋 Dữ liệu sau khi gộp mã")
-                st.dataframe(df_merged, use_container_width=True)
+                if not df_final.empty:
 
-                # chart
-                df_chart = pd.DataFrame({
-                    "Số mã khớp": list(matching_stats.keys()),
-                    "Số người sử dụng": list(matching_stats.values())
-                })
+                    # ❌ Loại bỏ dòng có Mã thẻ GG trống hoặc rỗng
+                    df_final = df_final[df_final['Mã thẻ GG'].notna()]
+                    df_final = df_final[df_final['Mã thẻ GG'].str.strip() != '']
 
-                fig = px.bar(df_chart, x="Số mã khớp", y="Số người sử dụng",
-                             title="Thống kê số người sử dụng theo số mã trùng khớp")
-                st.plotly_chart(fig, use_container_width=True)
-
-                # Show filter data
-                st.subheader("📊 Thống kê theo số lượng mã khớp")
-
-                for label, count in matching_stats.items():
-                    st.write(f"🔸 {label}: {count} người")
+                    # 👉 Gộp Mã thẻ GG theo SĐT
+                    def merge_and_dedup(values):
+                        codes = []
+                        for val in values.dropna():
+                            codes.extend([code.strip() for code in val.split(",")])
+                        return ', '.join(sorted(set(codes)))
 
 
-                # Show sum
-                st.subheader("📊 Tổng số người sử dụng mã")
-                st.write(f"🔸 {len(df_merged)}")
+                    df_merged = (
+                        df_final
+                        .groupby('SĐT')['Mã thẻ GG']
+                        .apply(merge_and_dedup)
+                        .reset_index()
+                    )
 
-                # Tổng hợp theo khu vực
-                df_merged_kv = df_final.copy()
-                df_merged_kv["Chi nhánh_lower"] = df_merged_kv["Chi nhánh"].str.lower()
-                kv_df["CH_lower"] = kv_df["Chuyển data cho CH"].str.lower()
+                    def count_matching_codes(ma_gg):
+                        if pd.isna(ma_gg):
+                            return 0
+                        codes = {x.strip().split("-")[0] for x in str(ma_gg).split(",")}
+                        return len(codes.intersection(target_codes))
 
-                df_merged_kv = df_merged_kv.merge(
-                    kv_df,
-                    left_on="Chi nhánh_lower",
-                    right_on="CH_lower",
-                    how="left"
-                )
+                    df_merged['matching_count'] = df_merged['Mã thẻ GG'].apply(count_matching_codes)
 
-                df_unique_customers = df_merged_kv.drop_duplicates(subset=["SĐT", "KV sau chuyển data"])
-                st.subheader("📍 Dữ liệu sau khi gán KV")
-                st.dataframe(df_unique_customers, use_container_width=True)
+                    max_match = len(target_codes)
+                    matching_stats = OrderedDict()
 
-                # Kiểm tra xem có dữ liệu bất thng hay không
-                # test_duplicate = df_unique_customers["SĐT"].value_counts().loc[lambda x: x > 1]
-                # st.subheader("📋 Danh sách KH bị lặp")
-                # st.dataframe(test_duplicate, use_container_width=True)
+                    for k in range(1, max_match):
+                        matching_stats[f"Dùng đúng {k} mã"] = (df_merged['matching_count'] == k).sum()
 
-                summary_df = df_unique_customers.groupby("KV sau chuyển data").agg(
-                    So_khach_hang=("SĐT", "count")
-                ).reset_index().rename(columns={"KV sau chuyển data": "Khu vực"})
-                st.subheader("📊 Thống kê theo Khu vực")
-                st.dataframe(summary_df, use_container_width=True)
+                    # Record dùng tất cả mã
+                    matching_stats[f"Dùng tất cả {max_match} mã"] = (df_merged['matching_count'] == max_match).sum()
+
+                    st.subheader("📋 Dữ liệu sau khi gộp mã")
+                    st.dataframe(df_merged, use_container_width=True)
+
+                    # chart
+                    df_chart = pd.DataFrame({
+                        "Số mã khớp": list(matching_stats.keys()),
+                        "Số người sử dụng": list(matching_stats.values())
+                    })
+
+                    fig = px.bar(df_chart, x="Số mã khớp", y="Số người sử dụng",
+                                 title="Thống kê số người sử dụng theo số mã trùng khớp")
+                    st.plotly_chart(fig, use_container_width=True)
+
+                    # Show filter data
+                    st.subheader("📊 Thống kê theo số lượng mã khớp")
+
+                    for label, count in matching_stats.items():
+                        st.write(f"🔸 {label}: {count} người")
+
+
+                    # Show sum
+                    st.subheader("📊 Tổng số người sử dụng mã")
+                    st.write(f"🔸 {len(df_merged)}")
+
+                    # Tổng hợp theo khu vực
+                    df_merged_kv = df_final.copy()
+                    df_merged_kv["Chi nhánh_lower"] = df_merged_kv["Chi nhánh"].str.lower()
+                    kv_df["CH_lower"] = kv_df["Chuyển data cho CH"].str.lower()
+
+                    df_merged_kv = df_merged_kv.merge(
+                        kv_df,
+                        left_on="Chi nhánh_lower",
+                        right_on="CH_lower",
+                        how="left"
+                    )
+
+                    df_unique_customers = df_merged_kv.drop_duplicates(subset=["SĐT", "KV sau chuyển data"])
+                    st.subheader("📍 Dữ liệu sau khi gán KV")
+                    st.dataframe(df_unique_customers, use_container_width=True)
+
+                    # Kiểm tra xem có dữ liệu bất thng hay không
+                    # test_duplicate = df_unique_customers["SĐT"].value_counts().loc[lambda x: x > 1]
+                    # st.subheader("📋 Danh sách KH bị lặp")
+                    # st.dataframe(test_duplicate, use_container_width=True)
+
+                    summary_df = df_unique_customers.groupby("KV sau chuyển data").agg(
+                        So_khach_hang=("SĐT", "count")
+                    ).reset_index().rename(columns={"KV sau chuyển data": "Khu vực"})
+                    st.subheader("📊 Thống kê theo Khu vực")
+                    st.dataframe(summary_df, use_container_width=True)
