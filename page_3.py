@@ -39,9 +39,10 @@ if uploaded_file:
             with st.expander("⚙️ Bộ lọc", expanded=True):
                 col1, col2 = st.columns(2)
                 with col1:
-                    start_date_input = st.date_input("🗓️ Từ ngày", value=datetime(2025, 5, 1).date())
+                    start_of_month = datetime.today().replace(day=1).date()
+                    start_date_input = st.date_input("🗓️ Từ ngày", value=start_of_month)
                 with col2:
-                    end_date_input = st.date_input("🗓️ Đến ngày", value=datetime(2025, 5, 10).date())
+                    end_date_input = st.date_input("🗓️ Đến ngày", value=datetime.today().date())
 
                 code_input = st.text_input(
                     "🔢 Nhập các mã cần lọc (cách nhau bằng dấu phẩy)",
@@ -129,12 +130,17 @@ if uploaded_file:
                 st.write(f"🔸 {len(df_merged)}")
 
                 # Tổng hợp theo khu vực
-                df_merged_kv = df_final.merge(
+                df_merged_kv = df_final.copy()
+                df_merged_kv["Chi nhánh_lower"] = df_merged_kv["Chi nhánh"].str.lower()
+                kv_df["CH_lower"] = kv_df["Chuyển data cho CH"].str.lower()
+
+                df_merged_kv = df_merged_kv.merge(
                     kv_df,
-                    left_on="Chi nhánh",
-                    right_on="Chuyển data cho CH",
+                    left_on="Chi nhánh_lower",
+                    right_on="CH_lower",
                     how="left"
                 )
+
                 df_unique_customers = df_merged_kv.drop_duplicates(subset=["SĐT", "KV sau chuyển data"])
                 st.subheader("📍 Dữ liệu sau khi gán KV")
                 st.dataframe(df_unique_customers, use_container_width=True)
