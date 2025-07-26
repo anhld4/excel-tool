@@ -107,6 +107,9 @@ if uploaded_file_data:
                         So_hoa_don=("Doanh thu tính lương", "count"),
                         Doanh_thu=("Doanh thu tính lương", "sum")
                     ).reset_index().rename(columns={"KV sau chuyển data": "Khu vực"})
+                    summary_df['Doanh_thu_format'] = summary_df['Doanh_thu'].apply(lambda x: f"{x:,.0f} ")
+                    summary_df.drop(columns=['Doanh_thu'], inplace=True)
+
                     st.subheader("📊 Thống kê theo Khu vực")
                     st.dataframe(summary_df, use_container_width=True)
 

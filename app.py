@@ -4,9 +4,9 @@ import streamlit as st
 page_1 = st.Page("page_1.py", title="SỐ BILL - DOANH THU THEO ĐẦU CODE", icon="📦")     # Gợi ý: Hóa đơn, sản phẩm
 page_2 = st.Page("page_2.py", title="CHI TIẾT SỐ CODE SỬ DỤNG", icon="📋")              # Gợi ý: Danh sách chi tiết
 page_3 = st.Page("page_3.py", title="SỐ NGƯỜI DÙNG CODE", icon="🧑‍🤝‍🧑")               # Gợi ý: Người dùng
-
+page_4 = st.Page("page_4.py", title="LỌC CODE THEO HÀNH TRÌNH", icon="🏷️")
 # Set up navigation
-pg = st.navigation([page_1, page_2, page_3])
+pg = st.navigation([page_1, page_2, page_3, page_4])
 
 # Run the selected page
 pg.run()
