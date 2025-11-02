@@ -50,12 +50,12 @@ if uploaded_file_hoa_don:
                 with col2:
                     end_date_input = st.date_input("🗓️ Đến ngày", value=datetime.today().date())
 
-            kv_input = st.text_input(
-                "🔢 Nhập khu vực cần lọc (cách nhau bằng dấu phẩy)",
-                value=""
-            )
-
-            target_kv = [kv.strip() for kv in kv_input.split(',') if kv.strip()]
+            # kv_input = st.text_input(
+            #     "🔢 Nhập khu vực cần lọc (cách nhau bằng dấu phẩy)",
+            #     value=""
+            # )
+            #
+            # target_kv = [kv.strip() for kv in kv_input.split(',') if kv.strip()]
             # print(target_kv)
 
             # 👇 Nhấn nút để bắt đầu lọc dữ liệu
@@ -81,12 +81,12 @@ if uploaded_file_hoa_don:
                 df_hoa_don["Chi nhánh lower"] = df_hoa_don["Chi nhánh"].str.lower()
                 kv_df["Chuyển data cho CH lower"] = kv_df["Chuyển data cho CH"].str.lower()
 
-                if len(target_kv) > 0:
-                    kv_df = kv_df[kv_df['KV sau chuyển data'].isin(target_kv)]
-                    list_chi_nhanh = kv_df['Chuyển data cho CH lower'].unique()
-
-                    # Lọc hóa đơn theo khu vực
-                    df_hoa_don = df_hoa_don[df_hoa_don['Chi nhánh lower'].isin(list_chi_nhanh)]
+                # if len(target_kv) > 0:
+                #     kv_df = kv_df[kv_df['KV sau chuyển data'].isin(target_kv)]
+                #     list_chi_nhanh = kv_df['Chuyển data cho CH lower'].unique()
+                #
+                #     # Lọc hóa đơn theo khu vực
+                #     df_hoa_don = df_hoa_don[df_hoa_don['Chi nhánh lower'].isin(list_chi_nhanh)]
 
                 # Hiển thị dữ liệu gốc
                 st.subheader("📋 Danh sách hóa đơn")
@@ -133,12 +133,12 @@ if uploaded_file_hoa_don:
                     st.metric("💰 Tổng doanh thu", f"{tong_doanh_thu:,.0f} VND")
 
                 # Lọc theo mã giảm giá
-                df_filtered = df_trung_lap[df_trung_lap['Mã thẻ GG'].notna() & (df_trung_lap['Mã thẻ GG'].str.strip() != '')]
-
-                tong_doanh_thu_gg = df_filtered['Doanh thu tính lương'].sum()
-
-                st.subheader("📋 Danh sách KH có sử dụng mã giảm giá")
-                st.dataframe(df_filtered, use_container_width=True)
+                # df_filtered = df_trung_lap[df_trung_lap['Mã thẻ GG'].notna() & (df_trung_lap['Mã thẻ GG'].str.strip() != '')]
+                #
+                # tong_doanh_thu_gg = df_filtered['Doanh thu tính lương'].sum()
+                #
+                # st.subheader("📋 Danh sách KH có sử dụng mã giảm giá")
+                # st.dataframe(df_filtered, use_container_width=True)
 
                 # df_duplicate_phones_mgg = df_matched[df_matched.duplicated(subset=["Phone"], keep=False)]
                 # if len(df_duplicate_phones_mgg) > 0:
@@ -147,8 +147,30 @@ if uploaded_file_hoa_don:
                 #
                 # df_matched_unique = df_matched.drop_duplicates(subset=["Phone"], keep="first")
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("🧮 Số khách nhận mã và sử dụng", len(df_filtered))
-                with col2:
-                    st.metric("💰 Tổng doanh thu", f"{tong_doanh_thu_gg:,.0f} VND")
+                # col1, col2 = st.columns(2)
+                # with col1:
+                #     st.metric("🧮 Số khách nhận mã và sử dụng", len(df_filtered))
+                # with col2:
+                #     st.metric("💰 Tổng doanh thu", f"{tong_doanh_thu_gg:,.0f} VND")
+
+                df_merged = df_trung_lap_unique.merge(
+                    kv_df,
+                    left_on="Chi nhánh lower",
+                    right_on="Chuyển data cho CH lower",
+                    how="left"
+                )
+
+                st.subheader("📍 Dữ liệu sau khi gán KV")
+                st.dataframe(df_merged, use_container_width=True)
+
+                summary_df = df_merged.groupby("KV sau chuyển data").agg(
+                    So_bill_mua=("Số CT", "nunique"),
+                    So_khach_mua=("SĐT", "nunique"),
+                    Doanh_thu_bill = ("Doanh thu tính lương", "sum")
+                ).reset_index().rename(columns={"KV sau chuyển data": "Khu vực"})
+                summary_df['Doanh_thu_bill_format'] = summary_df['Doanh_thu_bill'].apply(lambda x: f"{x:,.0f} ")
+                summary_df.drop(columns=['Doanh_thu_bill'], inplace=True)
+
+                st.subheader("📊 Thống kê theo Khu vực")
+                st.dataframe(summary_df, use_container_width=True)
+
