@@ -153,7 +153,7 @@ if uploaded_file_hoa_don:
                 # with col2:
                 #     st.metric("💰 Tổng doanh thu", f"{tong_doanh_thu_gg:,.0f} VND")
 
-                df_merged = df_trung_lap_unique.merge(
+                df_merged = df_trung_lap.merge(
                     kv_df,
                     left_on="Chi nhánh lower",
                     right_on="Chuyển data cho CH lower",
@@ -164,7 +164,7 @@ if uploaded_file_hoa_don:
                 st.dataframe(df_merged, use_container_width=True)
 
                 summary_df = df_merged.groupby("KV sau chuyển data").agg(
-                    So_bill_mua=("Số CT", "nunique"),
+                    So_bill_mua=("Số CT", "count"),
                     So_khach_mua=("SĐT", "nunique"),
                     Doanh_thu_bill = ("Doanh thu tính lương", "sum")
                 ).reset_index().rename(columns={"KV sau chuyển data": "Khu vực"})
